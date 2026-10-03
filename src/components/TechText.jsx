@@ -403,17 +403,18 @@ const TechText = ({
       if (moved > 1) {
         const hx = (glyph.box.x1 + glyph.box.x2) / 2;
         const hy = (glyph.box.y1 + glyph.box.y2) / 2;
+        const tension = Math.min(1, moved / 100);
         ctx.beginPath();
         ctx.moveTo(hx, hy);
         ctx.lineTo(hx + glyph.offset.x, hy + glyph.offset.y);
         ctx.setLineDash([3, 4]);
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = rgba(s.accentColor, 0.45 * a);
+        ctx.lineWidth = 1 + tension * 1.5;
+        ctx.strokeStyle = rgba(s.accentColor, (0.45 + tension * 0.45) * a);
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.beginPath();
         ctx.rect(Math.round(hx) - 2, Math.round(hy) - 2, 4, 4);
-        ctx.fillStyle = rgba(s.accentColor, 0.7 * a);
+        ctx.fillStyle = rgba(s.accentColor, (0.7 + tension * 0.3) * a);
         ctx.fill();
       }
 
@@ -485,10 +486,12 @@ const TechText = ({
       let moving = false;
       glyphs.forEach((glyph, i) => {
         if (i === dragging) {
-          glyph.offset.x = approach(glyph.offset.x, pointer.x - grab.x, dt, 0.03);
-          glyph.offset.y = approach(glyph.offset.y, pointer.y - grab.y, dt, 0.03);
-          glyph.velocity.x = 0;
-          glyph.velocity.y = 0;
+          const nextX = approach(glyph.offset.x, pointer.x - grab.x, dt, 0.03);
+          const nextY = approach(glyph.offset.y, pointer.y - grab.y, dt, 0.03);
+          glyph.velocity.x = (nextX - glyph.offset.x) / Math.max(dt, 0.001);
+          glyph.velocity.y = (nextY - glyph.offset.y) / Math.max(dt, 0.001);
+          glyph.offset.x = nextX;
+          glyph.offset.y = nextY;
           moving = true;
           return;
         }
@@ -613,12 +616,22 @@ const TechText = ({
           grab.x = pointer.x - glyphs[index].offset.x;
           grab.y = pointer.y - glyphs[index].offset.y;
           container.setPointerCapture?.(e.pointerId);
+          window.dispatchEvent(
+            new CustomEvent('fluid-splash', {
+              detail: { clientX: e.clientX, clientY: e.clientY, force: 1.1 }
+            })
+          );
         }
       }
       wake();
     };
     const onUp = e => {
       if (dragging >= 0) {
+        window.dispatchEvent(
+          new CustomEvent('fluid-splash', {
+            detail: { clientX: e.clientX, clientY: e.clientY, force: 1.6 }
+          })
+        );
         dragging = -1;
         container.releasePointerCapture?.(e.pointerId);
         const rect = container.getBoundingClientRect();

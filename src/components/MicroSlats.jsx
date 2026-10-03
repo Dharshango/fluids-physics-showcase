@@ -55,7 +55,7 @@ const SWELL_PRESETS = {
 const FLUID_SIZE = 96;
 const PRESSURE_STEPS = 16;
 const SPLAT_FORCE = 6900;
-const SPLASH_JETS = 3;
+const SPLASH_JETS = 5;
 const PIXEL_BUDGET = 4.5e6;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -850,7 +850,11 @@ const MicroSlats = ({
         return;
       }
       if (pointer.tracked && (spot.x !== pointer.x || spot.y !== pointer.y)) {
-        queue(spot.u, spot.v, (spot.x - pointer.x) / spot.h, (pointer.y - spot.y) / spot.h, null);
+        const dx = (spot.x - pointer.x) / spot.h;
+        const dy = (pointer.y - spot.y) / spot.h;
+        const speed = Math.hypot(dx, dy);
+        const boost = 1 + Math.min(speed * 4, 3.5);
+        queue(spot.u, spot.v, dx * boost, dy * boost, null);
       }
       pointer.x = spot.x;
       pointer.y = spot.y;
@@ -863,6 +867,19 @@ const MicroSlats = ({
       if (!fluid || !s || !s.interactive || reducedMotion || !spot.inside) return;
       splashTurn += 2.39996;
       queue(spot.u, spot.v, 0, 0, splashTurn);
+    };
+
+    const onFluidSplash = e => {
+      const s = settingsRef.current;
+      if (!fluid || !s || !s.interactive || reducedMotion) return;
+      const { clientX, clientY, force = 1 } = e.detail || {};
+      const rect = container.getBoundingClientRect();
+      const x = (clientX !== undefined ? clientX : rect.left + rect.width * 0.5) - rect.left;
+      const y = (clientY !== undefined ? clientY : rect.top + rect.height * 0.5) - rect.top;
+      const u = x / Math.max(1, rect.width);
+      const v = 1 - y / Math.max(1, rect.height);
+      splashTurn += 2.39996 * force;
+      queue(u, v, 0, 0, splashTurn);
     };
 
     const onPointerLeave = () => {
@@ -881,6 +898,7 @@ const MicroSlats = ({
     window.addEventListener('pointerdown', onPointerDown, { passive: true });
     window.addEventListener('pointerout', onPointerOut, { passive: true });
     window.addEventListener('blur', onPointerLeave);
+    window.addEventListener('fluid-splash', onFluidSplash);
     document.addEventListener('visibilitychange', onVisibility);
 
     const resizeObserver = new ResizeObserver(resize);
@@ -904,6 +922,7 @@ const MicroSlats = ({
       window.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointerout', onPointerOut);
       window.removeEventListener('blur', onPointerLeave);
+      window.removeEventListener('fluid-splash', onFluidSplash);
       document.removeEventListener('visibilitychange', onVisibility);
       wakeRef.current = null;
       disposeFluid();

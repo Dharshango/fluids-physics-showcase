@@ -4,14 +4,25 @@ import TechText from './components/TechText';
 import ControlDock, { THEMES } from './components/ControlDock';
 import './App.css';
 
+const BASE_SPEEDS = {
+  swell: 0.6,
+  tide: 0.5,
+  storm: 1.6,
+  signal: 1.2
+};
+
 export default function App() {
   const [preset, setPreset] = useState('swell');
   const [paused, setPaused] = useState(false);
-  const [swirl, setSwirl] = useState(0.4);
+  const [speedMultiplier, setSpeedMultiplier] = useState(1);
+  const [swirl, setSwirl] = useState(0.5);
+  const [lean, setLean] = useState(0.35);
   const [text, setText] = useState('React Bits');
   const [reveal, setReveal] = useState('letter');
   const [theme, setTheme] = useState(THEMES[0]);
   const [hidden, setHidden] = useState(false);
+
+  const calculatedSpeed = (BASE_SPEEDS[preset] || 0.6) * speedMultiplier;
 
   return (
     <div className="app-viewport">
@@ -24,10 +35,13 @@ export default function App() {
         <div className="telemetry-bar">
           <div className="telemetry-item">
             <span className="telemetry-dot" />
-            <span>FLUID NAVIER-STOKES</span>
+            <span>THEME: {theme.name.toUpperCase()}</span>
           </div>
           <div className="telemetry-item">
-            <span>SPRING DYNAMICS: 320N/m</span>
+            <span>WAVE SPEED: {speedMultiplier.toFixed(1)}x</span>
+          </div>
+          <div className="telemetry-item">
+            <span>SWIRL: {swirl > 0 ? `${swirl.toFixed(1)}` : 'OFF'}</span>
           </div>
           <div className="telemetry-item">
             <span>PRESET: {preset.toUpperCase()}</span>
@@ -46,14 +60,15 @@ export default function App() {
           slatHeight={28}
           gap={3}
           roundness={0.75}
+          speed={calculatedSpeed}
           interactive={true}
-          cursorStrength={1.2}
-          cursorSize={45}
+          cursorStrength={1.25}
+          cursorSize={50}
           swirl={swirl}
-          trail={1.5}
-          lean={0.2}
+          trail={1.6}
+          lean={lean}
           intro={true}
-          introDuration={1.4}
+          introDuration={1.3}
           paused={paused}
         />
       </div>
@@ -94,8 +109,12 @@ export default function App() {
         setPreset={setPreset}
         paused={paused}
         setPaused={setPaused}
+        speedMultiplier={speedMultiplier}
+        setSpeedMultiplier={setSpeedMultiplier}
         swirl={swirl}
         setSwirl={setSwirl}
+        lean={lean}
+        setLean={setLean}
         text={text}
         setText={setText}
         reveal={reveal}

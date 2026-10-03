@@ -4,11 +4,11 @@ import {
   Play,
   Pause,
   Type,
-  Eye,
-  EyeOff,
   Wind,
   Sliders,
-  Sparkles
+  Sparkles,
+  Gauge,
+  Compass
 } from 'lucide-react';
 import './ControlDock.css';
 
@@ -48,6 +48,42 @@ export const THEMES = [
     textColor: '#FFFFFF',
     accentColor: '#E2E8F0',
     swatch: 'linear-gradient(135deg, #94A3B8, #FFFFFF)'
+  },
+  {
+    id: 'crimson',
+    name: 'Blood Moon',
+    slatColor: '#EF4444',
+    glintColor: '#FDA4AF',
+    textColor: '#FFF1F2',
+    accentColor: '#F43F5E',
+    swatch: 'linear-gradient(135deg, #EF4444, #FDA4AF)'
+  },
+  {
+    id: 'synthwave',
+    name: 'Synthwave Sunset',
+    slatColor: '#8B5CF6',
+    glintColor: '#F43F5E',
+    textColor: '#FDF2F8',
+    accentColor: '#EC4899',
+    swatch: 'linear-gradient(135deg, #8B5CF6, #F43F5E)'
+  },
+  {
+    id: 'ocean',
+    name: 'Deep Abyss',
+    slatColor: '#06B6D4',
+    glintColor: '#A5F3FC',
+    textColor: '#F0FDFA',
+    accentColor: '#0EA5E9',
+    swatch: 'linear-gradient(135deg, #06B6D4, #A5F3FC)'
+  },
+  {
+    id: 'gold',
+    name: 'Royal Aureolin',
+    slatColor: '#EAB308',
+    glintColor: '#FEF08A',
+    textColor: '#FEFCE8',
+    accentColor: '#F59E0B',
+    swatch: 'linear-gradient(135deg, #EAB308, #FEF08A)'
   }
 ];
 
@@ -63,8 +99,12 @@ export default function ControlDock({
   setPreset,
   paused,
   setPaused,
+  speedMultiplier,
+  setSpeedMultiplier,
   swirl,
   setSwirl,
+  lean,
+  setLean,
   text,
   setText,
   reveal,
@@ -74,7 +114,7 @@ export default function ControlDock({
   hidden,
   setHidden
 }) {
-  // Global keyboard shortcut H to toggle HUD
+  // Global keyboard shortcut H to toggle HUD, Space to pause
   useEffect(() => {
     const handleKeyDown = e => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -114,21 +154,53 @@ export default function ControlDock({
 
           <div className="dock-divider" />
 
-          {/* Physics Actions */}
+          {/* Physics Dynamics Sliders & Controls */}
           <div className="dock-section">
             <button
               className={`icon-btn ${paused ? 'active' : ''}`}
               onClick={() => setPaused(p => !p)}
               title={paused ? 'Resume Waves (Space)' : 'Pause Waves (Space)'}
             >
-              {paused ? <Play size={15} /> : <Pause size={15} />}
+              {paused ? <Play size={14} /> : <Pause size={14} />}
             </button>
+
+            {/* Speed Multiplier Slider */}
+            <div className="slider-group" title={`Wave Speed Multiplier: ${speedMultiplier}x`}>
+              <Gauge size={12} style={{ color: 'rgba(255,255,255,0.6)' }} />
+              <input
+                type="range"
+                min="0.3"
+                max="2.2"
+                step="0.1"
+                value={speedMultiplier}
+                onChange={e => setSpeedMultiplier(parseFloat(e.target.value))}
+                className="slider-input"
+              />
+              <span className="slider-val">{speedMultiplier}x</span>
+            </div>
+
+            {/* Fluid Swirl Slider */}
+            <div className="slider-group" title={`Fluid Swirl / Vortex Strength: ${swirl}`}>
+              <Wind size={12} style={{ color: 'rgba(255,255,255,0.6)' }} />
+              <input
+                type="range"
+                min="0"
+                max="1.5"
+                step="0.1"
+                value={swirl}
+                onChange={e => setSwirl(parseFloat(e.target.value))}
+                className="slider-input"
+              />
+              <span className="slider-val">{swirl}</span>
+            </div>
+
+            {/* Slat Tilt with Current Toggle */}
             <button
-              className={`icon-btn ${swirl > 0 ? 'active' : ''}`}
-              onClick={() => setSwirl(s => (s > 0 ? 0 : 1.2))}
-              title={swirl > 0 ? 'Disable Fluid Swirl' : 'Enable Fluid Eddies & Swirl'}
+              className={`icon-btn ${lean > 0 ? 'active' : ''}`}
+              onClick={() => setLean(l => (l > 0 ? 0 : 0.45))}
+              title={lean > 0 ? 'Disable Slat Tilt' : 'Enable Slat Tilt with Current'}
             >
-              <Wind size={15} />
+              <Compass size={14} />
             </button>
           </div>
 
@@ -140,7 +212,7 @@ export default function ControlDock({
               <Type size={13} /> Text
             </span>
             <div className="text-input-wrap">
-              <Sparkles size={13} className="input-icon" />
+              <Sparkles size={12} className="input-icon" />
               <input
                 type="text"
                 className="text-input"
@@ -177,10 +249,10 @@ export default function ControlDock({
 
           <div className="dock-divider" />
 
-          {/* Theme Palette Switcher */}
+          {/* Expanded 8 Themes Palette */}
           <div className="dock-section">
             <span className="dock-label">Theme</span>
-            <div className="pill-group" style={{ padding: '4px 6px', gap: '6px' }}>
+            <div className="themes-container">
               {THEMES.map(t => (
                 <button
                   key={t.id}
@@ -195,7 +267,7 @@ export default function ControlDock({
         </div>
 
         <div className="dock-hint">
-          <span>Tip: Drag characters to test spring physics • Stir cursor to trigger fluid wakes</span>
+          <span>Tip: Fling / drag letters for spring rebound • Stir & click for hydrodynamic vortex waves</span>
           <span>•</span>
           <span>Press <strong>H</strong> to toggle dock</span>
         </div>
